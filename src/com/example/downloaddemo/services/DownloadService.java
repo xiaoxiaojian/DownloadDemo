@@ -25,9 +25,13 @@ public class DownloadService extends Service {
 			.getExternalStorageDirectory().getAbsolutePath() + "/mydownload";
 	public static final String ACTION_STAR = "ACTION_STAR";
 	public static final String ACTION_STOP = "ACTION_STOP";
+	public static final String ACTION_UPDATE = "ACTION_UPDATE";
+
+	private DownloadTask mTask;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		// 获取activity传递
 		if (ACTION_STAR.equals(intent.getAction())) {
 			FileInfo fileInfo = (FileInfo) intent
 					.getSerializableExtra("fileInfo");
@@ -37,6 +41,9 @@ public class DownloadService extends Service {
 			FileInfo fileInfo = (FileInfo) intent
 					.getSerializableExtra("fileInfo");
 			Log.i("test", "stop:" + fileInfo.toString());
+			if (mTask != null) {
+				mTask.isPost = true;
+			}
 		}
 		return super.onStartCommand(intent, flags, startId);
 	}
@@ -52,8 +59,11 @@ public class DownloadService extends Service {
 			case INIT_THREAD:
 				FileInfo file_info = (FileInfo) msg.obj;
 				Log.i("test", "handler:" + file_info.toString());
+				Log.i("test", "DOWNLOAD_PAHT:" + DOWNLOAD_PAHT);
+				// 启动下载任务
+				mTask = new DownloadTask(DownloadService.this, file_info);
+				mTask.download();
 				break;
-
 			default:
 				break;
 			}
@@ -92,7 +102,7 @@ public class DownloadService extends Service {
 				if (!dir.exists()) {
 					dir.mkdirs();
 				}
-				//创建本地文件
+				// 创建本地文件
 				File file = new File(dir, mFileInfo.getFileName());
 				raf = new RandomAccessFile(file, "rwd");
 				raf.setLength(length);
